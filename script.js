@@ -1,66 +1,66 @@
+// DOM Elements
+const menu = document.getElementById("menu");
+const startBtn = document.getElementById("startBtn");
+const mapBtn = document.getElementById("mapBtn");
+const mapSelection = document.getElementById("mapSelection");
+const mapOptions = document.querySelectorAll(".mapOption");
 const canvas = document.getElementById("gameCanvas");
+const gameUI = document.getElementById("gameUI");
+const scoreDisplay = document.getElementById("scoreDisplay");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 800;
 canvas.height = 400;
 
-// Player
-let player = {
-  x: 50,
-  y: 300,
-  width: 30,
-  height: 30,
-  color: "#00ff00",
-  velocityY: 0,
-  jumpPower: 12,
-  gravity: 0.6,
-  skinIndex: 0,
-  skins: ["#00ff00", "#ff0044", "#00ffff", "#ffdd00", "#ff00ff"]
-};
-
-// Obstacles
+// Game variables
+let player = {x:50,y:300,width:30,height:30,color:"#00ff00",velocityY:0,jumpPower:12,gravity:0.6};
 let obstacles = [];
-let obstacleSpeed = 5;
-
-// Coins
 let coins = [];
-let coinScore = 0;
-
-// Score
 let score = 0;
+let coinScore = 0;
 let gameOver = false;
+let obstacleSpeed = 5;
+let selectedMap = 0;
 
-// Sounds
-const jumpSound = new Audio('https://freesound.org/data/previews/331/331912_3248244-lq.mp3');
-const coinSound = new Audio('https://freesound.org/data/previews/146/146725_2615115-lq.mp3');
-const hitSound = new Audio('https://freesound.org/data/previews/459/459587_838627-lq.mp3');
+// Map patterns
+const maps = [
+  {name:"Map 1", pattern:[{x:400,y:350,width:20,height:50},{x:700,y:300,width:20,height:100}]},
+  {name:"Map 2", pattern:[{x:300,y:300,width:20,height:100},{x:600,y:350,width:20,height:50}]},
+  {name:"Map 3", pattern:[{x:200,y:250,width:20,height:150},{x:500,y:300,width:20,height:100},{x:800,y:320,width:20,height:80}]}
+];
 
-// Spawn Obstacles
-function spawnObstacle() {
-  let height = Math.random() * 50 + 20;
-  obstacles.push({x: canvas.width, y: canvas.height - height, width: 20, height: height, color: "red"});
+// Functions
+function startGame() {
+  menu.classList.add("hidden");
+  canvas.classList.remove("hidden");
+  gameUI.classList.remove("hidden");
+  obstacles = JSON.parse(JSON.stringify(maps[selectedMap].pattern));
+  update();
 }
 
-// Spawn Coins
-function spawnCoin() {
-  let size = 15;
-  let yPos = Math.random() * (canvas.height - 100) + 50;
-  coins.push({x: canvas.width, y: yPos, width: size, height: size, color: "gold"});
-}
-
-// Jump
 function jump() {
   if(player.y >= canvas.height - player.height){
     player.velocityY = -player.jumpPower;
-    jumpSound.play();
   }
 }
 
-// Update game
+// Event Listeners
+startBtn.addEventListener("click", startGame);
+mapBtn.addEventListener("click", () => { mapSelection.classList.toggle("hidden"); });
+mapOptions.forEach(btn => {
+  btn.addEventListener("click", e => {
+    selectedMap = parseInt(e.target.dataset.map);
+    mapSelection.classList.add("hidden");
+  });
+});
+document.addEventListener("keydown", e => { if(e.code==="Space") jump(); });
+canvas.addEventListener("click", jump);
+
+// Game Loop
 function update() {
   if(gameOver) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // Player physics
   player.velocityY += player.gravity;
@@ -68,60 +68,28 @@ function update() {
   if(player.y > canvas.height - player.height) player.y = canvas.height - player.height;
 
   // Draw player
-  ctx.fillStyle = player.skins[player.skinIndex];
+  ctx.fillStyle = player.color;
   ctx.fillRect(player.x, player.y, player.width, player.height);
 
-  // Obstacles
-  if(Math.random() < 0.02) spawnObstacle();
-  obstacles.forEach((obs, index) => {
+  // Draw obstacles
+  obstacles.forEach((obs,index)=>{
     obs.x -= obstacleSpeed;
-    ctx.fillStyle = obs.color;
+    ctx.fillStyle = "red";
     ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
 
     // Collision
     if(player.x < obs.x + obs.width && player.x + player.width > obs.x &&
        player.y < obs.y + obs.height && player.y + player.height > obs.y){
-      hitSound.play();
       gameOver = true;
-      alert("Game Over! Score: " + score + " + Coins: " + coinScore);
+      alert("Game Over! Score: "+score+" | Coins: "+coinScore);
       location.reload();
     }
 
-    if(obs.x + obs.width < 0) {
-      obstacles.splice(index, 1);
-      score++;
-    }
-  });
-
-  // Coins
-  if(Math.random() < 0.01) spawnCoin();
-  coins.forEach((coin, index) => {
-    coin.x -= obstacleSpeed;
-    ctx.fillStyle = coin.color;
-    ctx.beginPath();
-    ctx.arc(coin.x + coin.width/2, coin.y + coin.height/2, coin.width/2, 0, Math.PI*2);
-    ctx.fill();
-
-    // Collision with player
-    if(player.x < coin.x + coin.width && player.x + player.width > coin.x &&
-       player.y < coin.y + coin.height && player.y + player.height > coin.y){
-      coinSound.play();
-      coins.splice(index, 1);
-      coinScore++;
-    }
+    if(obs.x + obs.width < 0){ obstacles.splice(index,1); score++; }
   });
 
   // Score
-  ctx.fillStyle = "#fff";
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + score, 10, 30);
-  ctx.fillText("Coins: " + coinScore, 10, 60);
+  scoreDisplay.textContent = "Score: "+score+" | Coins: "+coinScore;
 
   requestAnimationFrame(update);
 }
-
-// Controls
-document.addEventListener("keydown", (e) => { if(e.code === "Space") jump(); });
-canvas.addEventListener("click", jump);
-
-update();
