@@ -3,15 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ultimate Geometry Dash</title>
+<title>Geometry Dash Ultimate</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Ultimate Geometry Dash</h1>
-<canvas id="gameCanvas"></canvas>
-<div class="instructions">
-  <p>SPACE / CLICK to jump</p>
-  <p>Collect coins for extra points!</p>
+<div id="menu">
+  <h1>Geometry Dash Ultimate</h1>
+  <button id="startBtn">Start Game</button>
+  <button id="mapBtn">Select Map</button>
+  <div id="mapSelection" class="hidden">
+    <button class="mapOption" data-map="0">Map 1</button>
+    <button class="mapOption" data-map="1">Map 2</button>
+    <button class="mapOption" data-map="2">Map 3</button>
+  </div>
+</div>
+<canvas id="gameCanvas" class="hidden"></canvas>
+<div id="gameUI" class="hidden">
+  <p id="scoreDisplay">Score: 0 | Coins: 0</p>
 </div>
 <script src="script.js"></script>
 </body>
